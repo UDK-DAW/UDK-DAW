@@ -9,7 +9,6 @@
     "test:coverage": "umi-test --coverage",
     "commit": "git-cz"
   },
-
   "lint-staged": {
     "*.{js,jsx,less,md,json}": [
       "prettier --write"
@@ -30,6 +29,8 @@
     "@ant-design/pro-layout": "^5.0.12",
     "@commitlint/cli": "^11.0.0",
     "@commitlint/config-conventional": "^11.0.0",
+    "@emotion/core": "^10.1.1",
+    "@emotion/styled": "^10.0.27",
     "@umijs/preset-react": "1.x",
     "@umijs/test": "^3.2.16",
     "commitizen": "^4.2.2",
@@ -38,12 +39,14 @@
     "prettier": "^2.1.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
+    "tone": "^14.7.58",
     "umi": "^3.2.16",
     "yorkie": "^2.0.0"
   },
   "devDependencies": {
     "@umijs/fabric": "^2.3.1",
     "@umijs/preset-ui": "^2.2.8",
+    "babel-plugin-emotion": "^10.0.33",
     "eslint": "^7.13.0",
     "husky": "^4.3.0"
   }
