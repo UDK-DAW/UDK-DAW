@@ -1,23 +1,14 @@
 {
   "private": true,
   "scripts": {
-    "start": "umi dev",
     "build": "umi build",
+    "commit": "git-cz",
     "postinstall": "umi generate tmp",
     "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
+    "start": "umi dev ",
     "test": "umi-test",
     "test:coverage": "umi-test --coverage",
-    "commit": "git-cz"
-  },
-  "lint-staged": {
-    "*.{js,jsx,less,md,json}": [
-      "prettier --write"
-    ],
-    "*.ts?(x)": [
-      "prettier --parser=typescript --write",
-      "eslint --fix",
-      "git add"
-    ]
+    "sort": "npx sort-package-json"
   },
   "husky": {
     "hooks": {
@@ -25,12 +16,22 @@
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   },
+  "lint-staged": {
+    "*.ts?(x)": [
+      "prettier --parser=typescript --write",
+      "git add"
+    ],
+    "*.{js,jsx,less,md,json}": [
+      "prettier --write"
+    ]
+  },
   "dependencies": {
     "@ant-design/pro-layout": "^5.0.12",
     "@commitlint/cli": "^11.0.0",
     "@commitlint/config-conventional": "^11.0.0",
     "@emotion/core": "^10.1.1",
     "@emotion/styled": "^10.0.27",
+    "@types/react": "^16.9.56",
     "@types/styled-components": "^5.1.4",
     "@umijs/preset-react": "1.x",
     "@umijs/test": "^3.2.16",
@@ -39,8 +40,11 @@
     "git-cz": "^4.7.1",
     "lint-staged": "^10.5.1",
     "prettier": "^2.1.2",
+    "prop-types": "^15.7.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
+    "react-spring": "^9.0.0-rc.3",
+    "sort-package-json": "^1.46.1",
     "styled-components": "^5.2.1",
     "tailwindcss": "^1.9.6",
     "tone": "^14.7.58",
