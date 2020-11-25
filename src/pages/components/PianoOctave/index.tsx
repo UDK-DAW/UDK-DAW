@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useSprings } from 'react-spring';
 import * as Tone from 'tone';
@@ -21,59 +21,72 @@ type Props = {
   currentOctave: number;
 };
 
+type Action = 'up' | 'down';
+
 const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave }) => {
   const synth: Tone.Synth<Tone.SynthOptions> = new Tone.Synth().toDestination();
-  const MouseDownTone = (scale: string, octave: number) => {
+  const triggerQueue: string[] = [];
+  const triggerTone = (scale: string, octave: number, action: Action) => {
     const now = Tone.now();
-    console.log(`${scale}${octave}`);
-    synth.triggerAttackRelease(`${scale}${octave}`, '4n', now);
+    const note = `${scale}${octave}`;
+    if (action === 'down') {
+      if (triggerQueue.indexOf(note) === -1) {
+        triggerQueue.push(note);
+        synth.triggerAttack(`${scale}${octave}`);
+      }
+    } else {
+      triggerQueue.splice(triggerQueue.indexOf(note), 1);
+      synth.triggerRelease(now);
+    }
+
+    // synth.triggerAttackRelease(`${scale}${octave}`, '4n', now);
     // synth.triggerAttackRelease("E4", "4n", now + 0.5);
     // synth.triggerAttackRelease("G4", "8n", now + 1);
   };
 
-  const switchKeyDown = (key: string) => {
+  const keyDownToTone = (key: string, action: Action) => {
     switch (key) {
       case 'a':
-        MouseDownTone('C', 1 + currentOctave);
+        triggerTone('C', 1 + currentOctave, action);
         break;
       case 's':
-        MouseDownTone('D', 1 + currentOctave);
+        triggerTone('D', 1 + currentOctave, action);
         break;
 
       case 'd':
-        MouseDownTone('E', 1 + currentOctave);
+        triggerTone('E', 1 + currentOctave, action);
         break;
 
       case 'f':
-        MouseDownTone('F', 1 + currentOctave);
+        triggerTone('F', 1 + currentOctave, action);
         break;
 
       case 'g':
-        MouseDownTone('G', 1 + currentOctave);
+        triggerTone('G', 1 + currentOctave, action);
         break;
 
       case 'h':
-        MouseDownTone('A', 1 + currentOctave);
+        triggerTone('A', 1 + currentOctave, action);
         break;
 
       case 'j':
-        MouseDownTone('B', 1 + currentOctave);
+        triggerTone('B', 1 + currentOctave, action);
         break;
 
       case 'k':
-        MouseDownTone('C', 2 + currentOctave);
+        triggerTone('C', 2 + currentOctave, action);
         break;
 
       case 'l':
-        MouseDownTone('D', 2 + currentOctave);
+        triggerTone('D', 2 + currentOctave, action);
         break;
 
       case ';':
-        MouseDownTone('E', 2 + currentOctave);
+        triggerTone('E', 2 + currentOctave, action);
         break;
 
       case "'":
-        MouseDownTone('F', 2 + currentOctave);
+        triggerTone('F', 2 + currentOctave, action);
         break;
 
       default:
@@ -81,16 +94,16 @@ const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave }) => {
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    switchKeyDown(e.key);
+  const boardHandler = (e: KeyboardEvent, action: Action) => {
+    keyDownToTone(e.key, action);
   };
 
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', (e) => boardHandler(e, 'down'));
+    window.addEventListener('keyup', (e) => boardHandler(e, 'up'));
   }, []);
 
-  type Action = 'up' | 'down';
-
+  // * Spring animation
   const whiteKeySpringsFn: (
     index: number,
     currentIndex?: number,
@@ -100,14 +113,14 @@ const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave }) => {
       return {
         top: '7px',
         color: '#333',
-        boxShadow: '0 1px 3px #aaa',
+        boxShadow: '0 1px 3px 0 rgba(170,170,170,1)',
         opacity: '0.7',
       };
     }
     return {
       top: '0px',
       color: '#333',
-      boxShadow: '0 5px 3px 0 #aaa',
+      boxShadow: '0 5px 3px 0 rgba(170,170,170,1)',
       opacity: '1',
     };
   };
@@ -118,18 +131,17 @@ const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave }) => {
   ) => KeySpringProps = (index, currentIndex, action) => {
     if (index === currentIndex && action === 'down') {
       return {
-        height: '82%',
-        boxShadow: '0 2px 2px 2px #aaa, inset 0 0 0 1px rgb(0 0 0)',
-        opacity: '0.9',
+        height: '83%',
+        boxShadow: '0 2px 2px 2px #333, inset 0 0 0 1px rgb(0 0 0)',
       };
     }
     return {
       height: '80%',
       boxShadow: '0 5px 2px 2px #111, inset 0 0 0 1px rgb(0 0 0)',
-      opacity: '1',
     };
   };
 
+  // * Key event
   const [whiteKeySprings, setWhiteKeySprings] = useSprings(PITCH_MAPPING.length, (index) => {
     return whiteKeySpringsFn(index);
   });
@@ -138,27 +150,27 @@ const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave }) => {
   });
 
   const whiteKeyMouseDown: KeyHandleInterface = (scale, index) => {
-    MouseDownTone(`${PITCH_MAPPING[index]}`, currentOctave);
+    triggerTone(`${PITCH_MAPPING[index]}`, currentOctave, 'down');
     setWhiteKeySprings((i) => {
       return whiteKeySpringsFn(i, index, 'down');
     });
   };
 
   const whiteKeyMouseUp: KeyHandleInterface = (scale, index) => {
-    MouseDownTone(`${PITCH_MAPPING[index]}`, currentOctave);
+    triggerTone(`${PITCH_MAPPING[index]}`, currentOctave, 'up');
     setWhiteKeySprings((i) => {
       return whiteKeySpringsFn(i, index, 'up');
     });
   };
   const blackKeyMouseDown: KeyHandleInterface = (scale, index) => {
-    MouseDownTone(`${PITCH_MAPPING[index]}#`, currentOctave);
+    triggerTone(`${PITCH_MAPPING[index]}#`, currentOctave, 'down');
     setBlackKeySprings((i) => {
       return blackKeySpringsFn(i, index, 'down');
     });
   };
 
   const blackKeyMouseUp: KeyHandleInterface = (scale, index) => {
-    MouseDownTone(`${PITCH_MAPPING[index]}#`, currentOctave);
+    triggerTone(`${PITCH_MAPPING[index]}#`, currentOctave, 'up');
     setBlackKeySprings((i) => {
       return blackKeySpringsFn(i, index, 'up');
     });

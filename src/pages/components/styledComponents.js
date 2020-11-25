@@ -3,7 +3,7 @@
  * @Email: wuzhaoyi@njsdata.com
  * @LastEditors: wuzhaoyi
  * @Date: 2020-11-15 15:56:50
- * @LastEditTime: 2020-11-22 14:00:59
+ * @LastEditTime: 2020-11-22 18:07:34
  * @Description: 请描述文件作用
  */
 import styled from 'styled-components';
@@ -46,7 +46,7 @@ const WhiteKey = styled(animated.div)`
   height: 100%;
   border: 1px solid #ccc;
   border-radius: 0 0 5px 5px;
-  box-shadow: 0 5px 3px 0 #aaa;
+  box-shadow: 0 5px 3px 0 rgba(170, 170, 170, 1);
 `;
 const BlackKeyContainer = styled.div`
   position: relative;
