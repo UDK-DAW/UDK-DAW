@@ -5,10 +5,10 @@
     "commit": "git-cz",
     "postinstall": "umi generate tmp",
     "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
+    "sort": "npx sort-package-json",
     "start": "umi dev ",
     "test": "umi-test",
-    "test:coverage": "umi-test --coverage",
-    "sort": "npx sort-package-json"
+    "test:coverage": "umi-test --coverage"
   },
   "husky": {
     "hooks": {

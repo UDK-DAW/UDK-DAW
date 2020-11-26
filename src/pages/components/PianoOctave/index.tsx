@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { useSprings } from 'react-spring';
-import * as Tone from 'tone';
 import {
   PianoOctaveStyled,
   PianoKeys,
@@ -9,7 +8,7 @@ import {
   BlackKeyContainer,
   BlackKey,
 } from '../styledComponents';
-import { KeySpringProps } from '../types';
+import { KeySpringProps, Action } from '../types';
 
 const PITCH_MAPPING: string[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
@@ -19,90 +18,10 @@ interface KeyHandleInterface {
 
 type Props = {
   currentOctave: number;
+  triggerTone: Function;
 };
 
-type Action = 'up' | 'down';
-
-const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave }) => {
-  const synth: Tone.Synth<Tone.SynthOptions> = new Tone.Synth().toDestination();
-  const triggerQueue: string[] = [];
-  const triggerTone = (scale: string, octave: number, action: Action) => {
-    const now = Tone.now();
-    const note = `${scale}${octave}`;
-    if (action === 'down') {
-      if (triggerQueue.indexOf(note) === -1) {
-        triggerQueue.push(note);
-        synth.triggerAttack(`${scale}${octave}`);
-      }
-    } else {
-      triggerQueue.splice(triggerQueue.indexOf(note), 1);
-      synth.triggerRelease(now);
-    }
-
-    // synth.triggerAttackRelease(`${scale}${octave}`, '4n', now);
-    // synth.triggerAttackRelease("E4", "4n", now + 0.5);
-    // synth.triggerAttackRelease("G4", "8n", now + 1);
-  };
-
-  const keyDownToTone = (key: string, action: Action) => {
-    switch (key) {
-      case 'a':
-        triggerTone('C', 1 + currentOctave, action);
-        break;
-      case 's':
-        triggerTone('D', 1 + currentOctave, action);
-        break;
-
-      case 'd':
-        triggerTone('E', 1 + currentOctave, action);
-        break;
-
-      case 'f':
-        triggerTone('F', 1 + currentOctave, action);
-        break;
-
-      case 'g':
-        triggerTone('G', 1 + currentOctave, action);
-        break;
-
-      case 'h':
-        triggerTone('A', 1 + currentOctave, action);
-        break;
-
-      case 'j':
-        triggerTone('B', 1 + currentOctave, action);
-        break;
-
-      case 'k':
-        triggerTone('C', 2 + currentOctave, action);
-        break;
-
-      case 'l':
-        triggerTone('D', 2 + currentOctave, action);
-        break;
-
-      case ';':
-        triggerTone('E', 2 + currentOctave, action);
-        break;
-
-      case "'":
-        triggerTone('F', 2 + currentOctave, action);
-        break;
-
-      default:
-        break;
-    }
-  };
-
-  const boardHandler = (e: KeyboardEvent, action: Action) => {
-    keyDownToTone(e.key, action);
-  };
-
-  useEffect(() => {
-    window.addEventListener('keydown', (e) => boardHandler(e, 'down'));
-    window.addEventListener('keyup', (e) => boardHandler(e, 'up'));
-  }, []);
-
+const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave, triggerTone }) => {
   // * Spring animation
   const whiteKeySpringsFn: (
     index: number,
@@ -214,6 +133,7 @@ const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave }) => {
 
 PianoOctave.propTypes = {
   currentOctave: PropTypes.number.isRequired,
+  triggerTone: PropTypes.func.isRequired,
 };
 
 export default PianoOctave;
