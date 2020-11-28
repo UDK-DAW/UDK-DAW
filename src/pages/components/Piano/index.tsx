@@ -1,15 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 // import PropTypes from 'prop-types';
 import * as Tone from 'tone';
 import { useSpring } from 'react-spring';
 import { PianoContainer } from '../styledComponents';
-import { KeySpringProps, Action } from '../types';
+import {
+  KeySpringProps,
+  Action,
+  firstWhiteKeyEnum,
+  secondWhiteKeyEnum,
+  firstBlackKeyEnum,
+  secondBlackKeyEnum,
+  RefObject,
+  KeyType,
+} from '../types';
 
 import PianoOctave from '../PianoOctave';
+
+const keyboardInterval = [
+  {
+    white: firstWhiteKeyEnum,
+    black: firstBlackKeyEnum,
+  },
+  {
+    white: secondWhiteKeyEnum,
+    black: secondBlackKeyEnum,
+  },
+];
 
 const Piano = () => {
   const props: KeySpringProps = useSpring({ opacity: 1, from: { opacity: 0 } });
   const [octaves, setoctaves] = useState<number[]>([2]);
+  const octavesRef = useRef<RefObject[]>([]);
 
   const synth = new Tone.PolySynth(Tone.Synth).toDestination();
   const triggerQueue: string[] = [];
@@ -42,57 +63,40 @@ const Piano = () => {
     setoctaves([...octaves, octaves[octaves.length - 1] + 1]);
   };
 
-  // TODO: 增加键盘按下动画
+  // * 找到按键对应的枚举
+  const findKeyIntoEnum: (
+    key: string,
+  ) => [any, number, KeyType] | [undefined, undefined, KeyType] = (key: string) => {
+    let targetEnum;
+    let targetIndex;
+    let targetType: KeyType = 'white';
+    keyboardInterval.some((interval, index) => {
+      if (Object.keys(interval.white).indexOf(key) > -1) {
+        targetEnum = interval.white;
+        targetIndex = index;
+        targetType = 'white';
+        return true;
+      }
+      if (Object.keys(interval.black).indexOf(key) > -1) {
+        targetEnum = interval.black;
+        targetIndex = index;
+        targetType = 'black';
+        return true;
+      }
+      return false;
+    });
 
-  const octave = 1;
+    return [targetEnum, targetIndex, targetType];
+  };
 
+  // * 键盘按下动画
   const keyDownToTone = (key: string, action: Action) => {
-    switch (key) {
-      case 'a':
-        triggerTone('C', 1 + octave, action);
-        break;
-      case 's':
-        triggerTone('D', 1 + octave, action);
-        break;
-
-      case 'd':
-        triggerTone('E', 1 + octave, action);
-        break;
-
-      case 'f':
-        triggerTone('F', 1 + octave, action);
-        break;
-
-      case 'g':
-        triggerTone('G', 1 + octave, action);
-        break;
-
-      case 'h':
-        triggerTone('A', 1 + octave, action);
-        break;
-
-      case 'j':
-        triggerTone('B', 1 + octave, action);
-        break;
-
-      case 'k':
-        triggerTone('C', 2 + octave, action);
-        break;
-
-      case 'l':
-        triggerTone('D', 2 + octave, action);
-        break;
-
-      case ';':
-        triggerTone('E', 2 + octave, action);
-        break;
-
-      case "'":
-        triggerTone('F', 2 + octave, action);
-        break;
-
-      default:
-        break;
+    const [targetEnum, targetIndex, targetType] = findKeyIntoEnum(key);
+    if (targetEnum && (targetIndex || targetIndex === 0) && octaves[targetIndex]) {
+      triggerTone(targetEnum[key], octaves[targetIndex], action);
+      const handleKeyIndex = Object.keys(targetEnum).indexOf(key);
+      const octavesRefNode = octavesRef.current[targetIndex];
+      if (octavesRefNode) octavesRefNode.handleKeyEvent(handleKeyIndex, action, targetType);
     }
   };
 
@@ -101,15 +105,23 @@ const Piano = () => {
   };
 
   useEffect(() => {
+    octavesRef.current = octavesRef.current.slice(0, octaves.length);
     window.addEventListener('keydown', (e) => boardHandler(e, 'down'));
     window.addEventListener('keyup', (e) => boardHandler(e, 'up'));
-  }, []);
+  }, [octaves]);
 
   return (
     <div>
       <PianoContainer style={props}>
-        {octaves.map((octave) => (
-          <PianoOctave key={octave} currentOctave={octave} triggerTone={triggerTone} />
+        {octaves.map((currentOctave, i) => (
+          <PianoOctave
+            key={currentOctave}
+            currentOctave={currentOctave}
+            triggerTone={triggerTone}
+            ref={(el: RefObject) => {
+              octavesRef.current[i] = el;
+            }}
+          />
         ))}
       </PianoContainer>
       <div className="container mx-auto flex flex-row bg-gray-200 m-6">

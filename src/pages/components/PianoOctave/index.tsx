@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useImperativeHandle, forwardRef, Ref } from 'react';
 import PropTypes from 'prop-types';
 import { useSprings } from 'react-spring';
 import {
@@ -8,12 +8,12 @@ import {
   BlackKeyContainer,
   BlackKey,
 } from '../styledComponents';
-import { KeySpringProps, Action } from '../types';
+import { KeySpringProps, Action, RefObject } from '../types';
 
 const PITCH_MAPPING: string[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
 interface KeyHandleInterface {
-  (scale: number, index: number): void;
+  (scale: number, index: number, action: Action): void;
 }
 
 type Props = {
@@ -21,7 +21,7 @@ type Props = {
   triggerTone: Function;
 };
 
-const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave, triggerTone }) => {
+const PianoOctave = forwardRef(({ currentOctave, triggerTone }: Props, ref: Ref<RefObject>) => {
   // * Spring animation
   const whiteKeySpringsFn: (
     index: number,
@@ -68,32 +68,33 @@ const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave, triggerTon
     return blackKeySpringsFn(index);
   });
 
-  const whiteKeyMouseDown: KeyHandleInterface = (scale, index) => {
-    triggerTone(`${PITCH_MAPPING[index]}`, currentOctave, 'down');
+  const whiteKeyMouseHandler: KeyHandleInterface = (scale, index, action) => {
+    triggerTone(`${PITCH_MAPPING[index]}`, currentOctave, action);
     setWhiteKeySprings((i) => {
-      return whiteKeySpringsFn(i, index, 'down');
+      return whiteKeySpringsFn(i, index, action);
+    });
+  };
+  const blackKeyMouseHandler: KeyHandleInterface = (scale, index, action) => {
+    triggerTone(`${PITCH_MAPPING[index]}#`, currentOctave, action);
+    setBlackKeySprings((i) => {
+      return blackKeySpringsFn(i, index, action);
     });
   };
 
-  const whiteKeyMouseUp: KeyHandleInterface = (scale, index) => {
-    triggerTone(`${PITCH_MAPPING[index]}`, currentOctave, 'up');
-    setWhiteKeySprings((i) => {
-      return whiteKeySpringsFn(i, index, 'up');
-    });
-  };
-  const blackKeyMouseDown: KeyHandleInterface = (scale, index) => {
-    triggerTone(`${PITCH_MAPPING[index]}#`, currentOctave, 'down');
-    setBlackKeySprings((i) => {
-      return blackKeySpringsFn(i, index, 'down');
-    });
-  };
-
-  const blackKeyMouseUp: KeyHandleInterface = (scale, index) => {
-    triggerTone(`${PITCH_MAPPING[index]}#`, currentOctave, 'up');
-    setBlackKeySprings((i) => {
-      return blackKeySpringsFn(i, index, 'up');
-    });
-  };
+  useImperativeHandle(ref, () => ({
+    handleKeyEvent: (handleKeyIndex, action, type) => {
+      if (type === 'white') {
+        console.log(action);
+        setWhiteKeySprings((i) => {
+          return whiteKeySpringsFn(i, handleKeyIndex, action);
+        });
+      } else if (type === 'black') {
+        setBlackKeySprings((i) => {
+          return blackKeySpringsFn(i, handleKeyIndex, action);
+        });
+      }
+    },
+  }));
 
   return (
     <PianoOctaveStyled>
@@ -102,11 +103,12 @@ const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave, triggerTon
           <WhiteKey
             style={props}
             onMouseDown={() => {
-              whiteKeyMouseDown(index, index);
+              whiteKeyMouseHandler(index, index, 'down');
             }}
             onMouseUp={() => {
-              whiteKeyMouseUp(index, index);
+              whiteKeyMouseHandler(index, index, 'up');
             }}
+            key={`${currentOctave + index}`}
           />
         ))}
       </PianoKeys>
@@ -117,11 +119,12 @@ const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave, triggerTon
               <BlackKey
                 style={props}
                 onMouseDown={() => {
-                  blackKeyMouseDown(index, index);
+                  blackKeyMouseHandler(index, index, 'down');
                 }}
                 onMouseUp={() => {
-                  blackKeyMouseUp(index, index);
+                  blackKeyMouseHandler(index, index, 'up');
                 }}
+                key={`${currentOctave + index}#`}
               />
             )}
           </BlackKeyContainer>
@@ -129,7 +132,7 @@ const PianoOctave: React.FunctionComponent<Props> = ({ currentOctave, triggerTon
       </PianoKeys>
     </PianoOctaveStyled>
   );
-};
+});
 
 PianoOctave.propTypes = {
   currentOctave: PropTypes.number.isRequired,
