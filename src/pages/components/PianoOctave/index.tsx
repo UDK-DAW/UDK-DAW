@@ -1,4 +1,4 @@
-import React, { useImperativeHandle, forwardRef, Ref } from 'react';
+import React, { useImperativeHandle, forwardRef, Ref, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useSprings } from 'react-spring';
 import {
@@ -8,7 +8,7 @@ import {
   BlackKeyContainer,
   BlackKey,
 } from '../styledComponents';
-import { KeySpringProps, Action, RefObject } from '../types';
+import { KeySpringProps, Action, RefObject, KeyType } from '../types';
 
 const PITCH_MAPPING: string[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
@@ -27,14 +27,18 @@ const PianoOctave = forwardRef(({ currentOctave, triggerTone }: Props, ref: Ref<
     index: number,
     currentIndex?: number,
     action?: Action,
-  ) => KeySpringProps = (index, currentIndex, action) => {
-    if (index === currentIndex && action === 'down') {
-      return {
-        top: '7px',
-        color: '#333',
-        boxShadow: '0 1px 3px 0 rgba(170,170,170,1)',
-        opacity: '0.7',
-      };
+    map?: Map<any, any>,
+  ) => KeySpringProps = (index, currentIndex, action, map) => {
+    if (action === 'down' && map) {
+      console.log(map);
+      if (map.has(index) && map.get(index) === 'white') {
+        return {
+          top: '7px',
+          color: '#333',
+          boxShadow: '0 1px 3px 0 rgba(170,170,170,1)',
+          opacity: '0.7',
+        };
+      }
     }
     return {
       top: '0px',
@@ -47,17 +51,30 @@ const PianoOctave = forwardRef(({ currentOctave, triggerTone }: Props, ref: Ref<
     index: number,
     currentIndex?: number,
     action?: Action,
-  ) => KeySpringProps = (index, currentIndex, action) => {
-    if (index === currentIndex && action === 'down') {
-      return {
-        height: '83%',
-        boxShadow: '0 2px 2px 2px #333, inset 0 0 0 1px rgb(0 0 0)',
-      };
+    map?: Map<any, any>,
+  ) => KeySpringProps = (index, currentIndex, action, map) => {
+    if (action === 'down' && map) {
+      if (map.has(index) && map.get(index) === 'white') {
+        return {
+          height: '83%',
+          boxShadow: '0 2px 2px 2px #333, inset 0 0 0 1px rgb(0 0 0)',
+        };
+      }
     }
     return {
       height: '80%',
       boxShadow: '0 5px 2px 2px #111, inset 0 0 0 1px rgb(0 0 0)',
     };
+  };
+
+  const [downKeysMap] = useState(new Map());
+
+  const keyDownHandler = (key: number, action: Action, type: KeyType) => {
+    if (action === 'down') {
+      downKeysMap.set(key, type);
+    } else {
+      downKeysMap.delete(key);
+    }
   };
 
   // * Key event
@@ -69,28 +86,30 @@ const PianoOctave = forwardRef(({ currentOctave, triggerTone }: Props, ref: Ref<
   });
 
   const whiteKeyMouseHandler: KeyHandleInterface = (scale, index, action) => {
+    keyDownHandler(index, action, 'white');
     triggerTone(`${PITCH_MAPPING[index]}`, currentOctave, action);
     setWhiteKeySprings((i) => {
-      return whiteKeySpringsFn(i, index, action);
+      return whiteKeySpringsFn(i, index, action, downKeysMap);
     });
   };
   const blackKeyMouseHandler: KeyHandleInterface = (scale, index, action) => {
+    keyDownHandler(index, action, 'black');
     triggerTone(`${PITCH_MAPPING[index]}#`, currentOctave, action);
     setBlackKeySprings((i) => {
-      return blackKeySpringsFn(i, index, action);
+      return blackKeySpringsFn(i, index, action, downKeysMap);
     });
   };
 
   useImperativeHandle(ref, () => ({
     handleKeyEvent: (handleKeyIndex, action, type) => {
+      keyDownHandler(handleKeyIndex, action, type);
       if (type === 'white') {
-        console.log(action);
         setWhiteKeySprings((i) => {
-          return whiteKeySpringsFn(i, handleKeyIndex, action);
+          return whiteKeySpringsFn(i, handleKeyIndex, action, downKeysMap);
         });
       } else if (type === 'black') {
         setBlackKeySprings((i) => {
-          return blackKeySpringsFn(i, handleKeyIndex, action);
+          return blackKeySpringsFn(i, handleKeyIndex, action, downKeysMap);
         });
       }
     },
